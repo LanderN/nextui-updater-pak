@@ -12,6 +12,7 @@ rm -rf "$DIST_DIR"
 mkdir -p "$UPDATER_DIR"
 
 cp "$UPDATER_BINARY" "$UPDATER_DIR/nextui-updater"
+cp "pak.json" "$UPDATER_DIR/pak.json"
 
 cat > "$LAUNCH_SCRIPT" <<EOF
 #!/bin/sh
