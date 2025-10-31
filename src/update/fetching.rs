@@ -56,7 +56,9 @@ pub fn fetch_releases(repo: &str) -> Result<Vec<Release>> {
 
 pub fn fetch_tags(repo: &str) -> Result<Vec<Tag>> {
     let response = get_client()
-        .get(format!("https://api.github.com/repos/{repo}/tags?per_page=100"))
+        .get(format!(
+            "https://api.github.com/repos/{repo}/tags?per_page=100"
+        ))
         .header("User-Agent", USER_AGENT)
         .send()?;
 
