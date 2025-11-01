@@ -1,9 +1,10 @@
 use crate::{
     app_state::{AppStateManager, Progress},
+    github::ReleaseAndTag,
     Result, SDCARD_ROOT,
 };
 use bytes::Bytes;
-use fetching::{download, fetch_latest_release, fetch_tag};
+use fetching::{download, fetch_latest_release, fetch_releases, fetch_tags};
 use regex::Regex;
 
 use std::{
@@ -126,36 +127,86 @@ pub fn self_update(app_state: &AppStateManager) -> Result<()> {
 pub fn do_nextui_release_check(app_state: &AppStateManager) {
     // Fetch latest release information
     app_state.start_operation("Fetching latest NextUI release...");
+    let repo = "LoveRetro/NextUI";
 
-    let latest_release = fetch_latest_release("LoveRetro/NextUI");
-
-    match &latest_release {
-        Ok(release) => {
-            app_state.set_nextui_release(Some(release.clone()));
-        }
-        Err(err) => {
-            println!("Release fetch failed: {:?}", err.source());
-            app_state.set_operation_failed(&format!("Release fetch failed: {err}"));
-        }
-    }
-
-    if latest_release.is_err() {
+    // Fetch latest releases information
+    app_state.start_operation("Fetching latest NextUI releases...");
+    let latest_releases = fetch_releases(repo);
+    if latest_releases.is_err() {
+        // Failed connection
+        let err = latest_releases.unwrap_err();
+        println!("Releases fetch failed: {:?}", err.source());
+        app_state.set_operation_failed(&format!("Releases fetch failed: {err}"));
         return;
     }
-    let latest_release = latest_release.unwrap();
+    let latest_releases = latest_releases.unwrap();
+    if latest_releases.is_empty() {
+        // Connected, but no results
+        println!("Releases fetch returned 0 releases");
+        app_state.set_operation_failed("Releases fetch returned 0 releases");
+        return;
+    }
 
     // Fetch latest tag information
-    app_state.start_operation("Fetching latest NextUI tag...");
+    app_state.start_operation("Fetching latest NextUI tags...");
+    let latest_tags = fetch_tags(repo);
+    if latest_tags.is_err() {
+        // Failed connection
+        let err = latest_tags.unwrap_err();
+        println!("Tags fetch failed: {:?}", err.source());
+        app_state.set_operation_failed(&format!("Tags fetch failed: {err}"));
+        return;
+    }
+    let mut latest_tags = latest_tags.unwrap();
+    if latest_tags.is_empty() {
+        // Connected, but no results
+        println!("Tags fetch returned 0 tags");
+        app_state.set_operation_failed("Tags fetch returned 0 tags");
+        return;
+    }
 
-    let latest_tag = fetch_tag("LoveRetro/NextUI", &latest_release.tag_name);
-    match latest_tag {
-        Ok(tag) => {
-            app_state.set_nextui_tag(Some(tag.clone()));
+    // Build ReleaseAndTag list for app state
+    let mut releases_and_tags: Vec<ReleaseAndTag> = vec![];
+    let mut check_latest_release = true;
+    let current_tag = app_state.current_version().unwrap_or("".to_string());
+    let mut current_tag_found = false;
+    for release in latest_releases.iter() {
+        if let Some(tag_index) = latest_tags
+            .iter()
+            .position(|tag| tag.name == release.tag_name)
+        {
+            releases_and_tags.push(ReleaseAndTag {
+                release: (release.clone()),
+                tag: (latest_tags[tag_index].clone()),
+            });
+            if latest_tags[tag_index].commit.sha.starts_with(&current_tag) {
+                // set release selector starting index
+                app_state.set_nextui_releases_and_tags_index(Some(releases_and_tags.len() - 1));
+                current_tag_found = true
+            }
+            latest_tags.remove(tag_index);
+            if check_latest_release {
+                check_latest_release = false;
+            }
+            continue;
         }
-        Err(err) => {
-            println!("Tag fetch failed: {:?}", err.source());
-            app_state.set_operation_failed(&format!("Tag fetch failed: {err}"));
+        if check_latest_release {
+            // Failed to find a match for the first release
+            println!("Latest release has no matching tag: {:?}", release.tag_name);
+            app_state.set_operation_failed(&format!(
+                "Latest release has no matching tag: {:?}",
+                release.tag_name
+            ));
+            return;
         }
+    }
+
+    // Save collected values to app state
+    app_state.set_nextui_release(Some(releases_and_tags[0].release.clone()));
+    app_state.set_nextui_tag(Some(releases_and_tags[0].tag.clone()));
+    app_state.set_nextui_releases_and_tags(Some(releases_and_tags));
+    if !current_tag_found {
+        app_state.set_nextui_releases_and_tags_index(Some(0 as usize));
     }
 
     app_state.finish_operation();
@@ -189,7 +240,7 @@ pub fn do_update(app_state: &'static AppStateManager, full: bool) {
 }
 
 pub fn update_nextui(app_state: &AppStateManager, full: bool) -> Result<()> {
-    let release = {
+    let mut release = {
         app_state.start_operation("Downloading update...");
 
         app_state
@@ -197,6 +248,11 @@ pub fn update_nextui(app_state: &AppStateManager, full: bool) -> Result<()> {
             .clone()
             .ok_or("No release found")?
     };
+    if app_state.release_selection_menu() {
+        let index = app_state.nextui_releases_and_tags_index().unwrap_or(0);
+        let relase_and_tag_vector = app_state.nextui_releases_and_tags().unwrap_or_default();
+        release = relase_and_tag_vector[index].release.clone();
+    }
 
     let assets = release.assets;
     let asset = assets

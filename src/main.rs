@@ -24,13 +24,6 @@ fn main() -> Result<()> {
     // Initialize application state
     let app_state: &'static AppStateManager = Box::leak(Box::new(AppStateManager::new()));
 
-    // Self-update
-    let app_state_clone = app_state.clone();
-    thread::spawn(move || {
-        do_self_update(&app_state_clone);
-        do_nextui_release_check(&app_state_clone);
-    });
-
     // Get current NextUI version
     let version_file =
         std::fs::read_to_string(SDCARD_ROOT.to_owned() + ".system/version.txt").unwrap_or_default();
@@ -39,6 +32,13 @@ fn main() -> Result<()> {
         .nth(1)
         .map(std::borrow::ToOwned::to_owned);
     app_state.set_current_version(current_sha);
+
+    // Self-update
+    let app_state_clone = app_state.clone();
+    thread::spawn(move || {
+        do_self_update(&app_state_clone);
+        do_nextui_release_check(&app_state_clone);
+    });
 
     run_ui(app_state)?;
 

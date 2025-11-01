@@ -22,3 +22,9 @@ pub struct Tag {
 pub struct Commit {
     pub sha: String,
 }
+
+#[derive(Clone, Debug)]
+pub struct ReleaseAndTag {
+    pub release: Release,
+    pub tag: Tag,
+}

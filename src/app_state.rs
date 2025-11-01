@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use parking_lot::Mutex;
 
-use crate::github::{Release, Tag};
+use crate::github::{Release, ReleaseAndTag, Tag};
 
 // Application state shared between UI thread and update thread
 #[derive(Clone)]
@@ -16,6 +16,10 @@ pub struct AppState {
     current_version: Option<String>,
     nextui_release: Option<Release>,
     nextui_tag: Option<Tag>,
+    nextui_releases_and_tags: Option<Vec<ReleaseAndTag>>,
+    nextui_releases_and_tags_index: Option<usize>,
+    release_selection_menu: bool,
+    release_selection_confirmed: bool,
     current_operation: Option<String>,
     progress: Option<Progress>,
     error: Option<String>,
@@ -40,6 +44,10 @@ impl AppStateManager {
                 current_version: None,
                 nextui_release: None,
                 nextui_tag: None,
+                nextui_releases_and_tags: None,
+                nextui_releases_and_tags_index: None,
+                release_selection_menu: false,
+                release_selection_confirmed: false,
                 current_operation: None,
                 progress: None,
                 error: None,
@@ -93,6 +101,22 @@ impl AppStateManager {
         self.state.lock().nextui_tag.clone()
     }
 
+    pub fn nextui_releases_and_tags(&self) -> Option<Vec<ReleaseAndTag>> {
+        self.state.lock().nextui_releases_and_tags.clone()
+    }
+
+    pub fn nextui_releases_and_tags_index(&self) -> Option<usize> {
+        self.state.lock().nextui_releases_and_tags_index.clone()
+    }
+
+    pub fn release_selection_menu(&self) -> bool {
+        self.state.lock().release_selection_menu
+    }
+
+    pub fn release_selection_confirmed(&self) -> bool {
+        self.state.lock().release_selection_confirmed
+    }
+
     // Setter methods
     pub fn set_submenu(&self, submenu: Submenu) {
         self.state.lock().submenu = submenu;
@@ -128,6 +152,22 @@ impl AppStateManager {
 
     pub fn set_nextui_tag(&self, tag: Option<Tag>) {
         self.state.lock().nextui_tag = tag;
+    }
+
+    pub fn set_nextui_releases_and_tags(&self, releases_and_tags: Option<Vec<ReleaseAndTag>>) {
+        self.state.lock().nextui_releases_and_tags = releases_and_tags;
+    }
+
+    pub fn set_nextui_releases_and_tags_index(&self, releases_and_tags_index: Option<usize>) {
+        self.state.lock().nextui_releases_and_tags_index = releases_and_tags_index;
+    }
+
+    pub fn set_release_selection_menu(&self, release_selection_menu: bool) {
+        self.state.lock().release_selection_menu = release_selection_menu;
+    }
+
+    pub fn set_release_selection_confirmed(&self, release_selection_confirmed: bool) {
+        self.state.lock().release_selection_confirmed = release_selection_confirmed;
     }
 
     // Combined operations
