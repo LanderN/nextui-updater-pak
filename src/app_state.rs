@@ -106,7 +106,7 @@ impl AppStateManager {
     }
 
     pub fn nextui_releases_and_tags_index(&self) -> Option<usize> {
-        self.state.lock().nextui_releases_and_tags_index.clone()
+        self.state.lock().nextui_releases_and_tags_index
     }
 
     pub fn release_selection_menu(&self) -> bool {

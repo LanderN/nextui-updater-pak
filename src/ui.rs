@@ -18,6 +18,7 @@ const WINDOW_HEIGHT: u32 = 768;
 const DPI_SCALE: f32 = 4.0;
 const FONTS: [&str; 2] = ["BPreplayBold-unhinted.otf", "chillroundm.ttf"];
 
+#[allow(clippy::too_many_lines)]
 fn nextui_ui(ui: &mut egui::Ui, app_state: &'static AppStateManager) -> egui::Response {
     let current_version = app_state.current_version();
     let mut latest_release = app_state.nextui_release().clone();
@@ -28,8 +29,9 @@ fn nextui_ui(ui: &mut egui::Ui, app_state: &'static AppStateManager) -> egui::Re
     if app_state.release_selection_menu() {
         let index = app_state.nextui_releases_and_tags_index().unwrap_or(0);
         let relase_and_tag_vector = app_state.nextui_releases_and_tags().unwrap_or_default();
-        latest_release = Some(relase_and_tag_vector[index].release.clone());
-        latest_tag = Some(relase_and_tag_vector[index].tag.clone());
+        let release_and_tag = relase_and_tag_vector.get(index).cloned();
+        latest_release = release_and_tag.as_ref().map(|r| r.release.clone());
+        latest_tag = release_and_tag.map(|r| r.tag.clone());
     }
 
     if app_state.release_selection_menu() & !app_state.release_selection_confirmed() {
@@ -47,51 +49,44 @@ fn nextui_ui(ui: &mut egui::Ui, app_state: &'static AppStateManager) -> egui::Re
         // Show release information if available
         match (current_version, latest_tag, latest_release) {
             (Some(current_version), Some(tag), _) => {
-                let selected_tag = hint_wrap_nextui_tag(app_state, tag.name);
-                if tag.commit.sha.starts_with(&current_version) & !latest_discarded {
+                let selected_tag = hint_wrap_nextui_tag(app_state, &tag.name);
+                if tag.commit.sha.starts_with(&current_version) && !latest_discarded {
                     if app_state.release_selection_menu() {
                         // selection view
                         ui.label(
-                            RichText::new(format!("Selected Version:\n{}\nThis version is currently already installed!", selected_tag)).size(10.0),
-                        );
-                    } else {
-                        ui.label(
-                            RichText::new(format!("You currently have the latest available version:\n{}\nX to select different version", selected_tag)).size(10.0),
-                        );
-                    }
-                    update_available = false;
-                } else {
-                    if app_state.release_selection_menu() {
-                        // selection view
-                        ui.label(
-                            RichText::new(format!("Selected Version:\n{}", selected_tag))
-                                .size(10.0),
+                            RichText::new(format!("Selected Version:\n{selected_tag}\nThis version is currently already installed!")).size(10.0),
                         );
                     } else {
                         ui.label(
                             RichText::new(format!(
-                                "New version available:\n{}\nX to select different version",
-                                selected_tag
+                                "You currently have the latest available version:\n{selected_tag}"
                             ))
                             .size(10.0),
                         );
                     }
+                    update_available = false;
+                } else if app_state.release_selection_menu() {
+                    // selection view
+                    ui.label(
+                        RichText::new(format!("Selected Version:\n{selected_tag}")).size(10.0),
+                    );
+                } else {
+                    ui.label(
+                        RichText::new(format!("New version available:\n{selected_tag}")).size(10.0),
+                    );
                 }
             }
             (_, _, Some(release)) => {
                 if app_state.release_selection_menu() {
                     // selection view
-                    let selected_tag = hint_wrap_nextui_tag(app_state, release.tag_name);
+                    let selected_tag = hint_wrap_nextui_tag(app_state, &release.tag_name);
                     ui.label(
-                        RichText::new(format!("Selected Version:\n{}", selected_tag)).size(10.0),
+                        RichText::new(format!("Selected Version:\n{selected_tag}")).size(10.0),
                     );
                 } else {
                     ui.label(
-                        RichText::new(format!(
-                            "Latest version:\nNextUI {}\nX to select different version",
-                            release.tag_name
-                        ))
-                        .size(10.0),
+                        RichText::new(format!("Latest version:\nNextUI {}", release.tag_name))
+                            .size(10.0),
                     );
                 }
             }
@@ -310,18 +305,18 @@ fn load_font() -> Result<FontDefinitions> {
     })
 }
 
-fn hint_wrap_nextui_tag(app_state: &'static AppStateManager, tag_name: String) -> String {
-    let mut selected_tag = format!("NextUI {}", tag_name);
+fn hint_wrap_nextui_tag(app_state: &'static AppStateManager, tag_name: &str) -> String {
+    let mut selected_tag = format!("NextUI {tag_name}");
     if !app_state.release_selection_menu() {
         return selected_tag;
     }
     if !is_most_left_index(app_state) {
-        selected_tag = format!("<<     {}", selected_tag);
+        selected_tag = format!("<<     {selected_tag}");
     }
     if !is_most_right_index(app_state) {
-        selected_tag = format!("{}     >>", selected_tag);
+        selected_tag = format!("{selected_tag}     >>");
     }
-    return selected_tag;
+    selected_tag
 }
 
 fn is_most_left_index(app_state: &'static AppStateManager) -> bool {
@@ -330,11 +325,24 @@ fn is_most_left_index(app_state: &'static AppStateManager) -> bool {
         .nextui_releases_and_tags()
         .unwrap_or_default()
         .len();
-    return index >= max_index - 1;
+    index >= max_index - 1
 }
 
 fn is_most_right_index(app_state: &'static AppStateManager) -> bool {
-    return app_state.nextui_releases_and_tags_index() == Some(0);
+    app_state.nextui_releases_and_tags_index() == Some(0)
+}
+
+fn handle_version_navigation(app_state: &'static AppStateManager, direction: i32) {
+    if app_state.release_selection_menu() && app_state.release_selection_confirmed() {
+        let index = app_state.nextui_releases_and_tags_index().unwrap_or(0);
+        if direction < 0 && !is_most_left_index(app_state) {
+            // Navigate left (older versions)
+            app_state.set_nextui_releases_and_tags_index(Some(index + 1));
+        } else if direction > 0 && !is_most_right_index(app_state) {
+            // Navigate right (newer versions)
+            app_state.set_nextui_releases_and_tags_index(Some(index - 1));
+        }
+    }
 }
 
 #[allow(clippy::too_many_lines)]
@@ -443,6 +451,43 @@ pub fn run_ui(app_state: &'static AppStateManager) -> Result<()> {
                 }
             });
 
+            if !app_state.release_selection_menu() && app_state.current_operation().is_none() {
+                egui::Area::new(egui::Id::new("version_selector_indicator"))
+                    .anchor(egui::Align2::RIGHT_TOP, Vec2::new(-2.0, -2.0))
+                    .interactable(false)
+                    .show(ui.ctx(), |ui| {
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 4.0;
+
+                            // Draw circle background for button
+                            let button_size = 6.0;
+                            let (rect, _response) = ui.allocate_exact_size(
+                                Vec2::splat(button_size),
+                                egui::Sense::empty(),
+                            );
+                            ui.painter().circle(
+                                rect.center(),
+                                button_size / 2.0,
+                                Color32::from_rgb(60, 60, 60),
+                                egui::Stroke::new(1.0, Color32::from_rgb(100, 100, 100)),
+                            );
+                            ui.painter().text(
+                                rect.center(),
+                                egui::Align2::CENTER_CENTER,
+                                "X",
+                                egui::FontId::proportional(6.0),
+                                Color32::from_rgb(180, 180, 180),
+                            );
+
+                            ui.label(
+                                RichText::new("Select Version")
+                                    .size(6.0)
+                                    .color(Color32::from_rgb(100, 100, 100)),
+                            );
+                        });
+                    });
+            }
+
             if let Some(hint) = app_state.hint() {
                 ui.allocate_new_ui(
                     egui::UiBuilder::new().max_rect(Rect {
@@ -472,6 +517,13 @@ pub fn run_ui(app_state: &'static AppStateManager) -> Result<()> {
                             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~`!@#$%^&*()-=_+[]{};':\",.<>/?",
                         )
                         .size(10.0)
+                        .color(Color32::TRANSPARENT)
+                    );
+                    ui.label(
+                        RichText::new(
+                            "XSelect Version",
+                        )
+                        .size(6.0)
                         .color(Color32::TRANSPARENT)
                     );
                 },
@@ -536,19 +588,11 @@ pub fn run_ui(app_state: &'static AppStateManager) -> Result<()> {
                     }
 
                     if app_state.release_selection_menu() {
-                        if app_state.release_selection_confirmed() {
-                            // Add left/right options in selection menu
-                            let index = app_state.nextui_releases_and_tags_index().unwrap_or(0);
-                            if button == sdl2::controller::Button::DPadLeft {
-                                if !is_most_left_index(app_state) {
-                                    app_state.set_nextui_releases_and_tags_index(Some(index + 1));
-                                }
-                            }
-                            if button == sdl2::controller::Button::DPadRight {
-                                if !is_most_right_index(app_state) {
-                                    app_state.set_nextui_releases_and_tags_index(Some(index - 1));
-                                }
-                            }
+                        // Handle left/right navigation in selection menu
+                        if button == sdl2::controller::Button::DPadLeft {
+                            handle_version_navigation(app_state, -1);
+                        } else if button == sdl2::controller::Button::DPadRight {
+                            handle_version_navigation(app_state, 1);
                         }
                     } else {
                         // Add X button to reach selection menu
@@ -571,12 +615,13 @@ pub fn run_ui(app_state: &'static AppStateManager) -> Result<()> {
                     }
                 }
                 // for easy testing on desktop
-                Event::KeyDown {
-                    keycode: Some(sdl2::keyboard::Keycode::Escape),
-                    ..
-                } => {
-                    handle_back_button();
-                }
+                Event::KeyDown { keycode, .. } => match keycode {
+                    Some(sdl2::keyboard::Keycode::Escape) => handle_back_button(),
+                    Some(sdl2::keyboard::Keycode::X) => app_state.set_release_selection_menu(true),
+                    Some(sdl2::keyboard::Keycode::Left) => handle_version_navigation(app_state, -1),
+                    Some(sdl2::keyboard::Keycode::Right) => handle_version_navigation(app_state, 1),
+                    _ => {}
+                },
                 _ => {
                     // Process other input events
                     egui_state.process_input(&window, event, &mut painter);

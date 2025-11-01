@@ -168,9 +168,9 @@ pub fn do_nextui_release_check(app_state: &AppStateManager) {
     // Build ReleaseAndTag list for app state
     let mut releases_and_tags: Vec<ReleaseAndTag> = vec![];
     let mut check_latest_release = true;
-    let current_tag = app_state.current_version().unwrap_or("".to_string());
+    let current_tag = app_state.current_version().unwrap_or_default();
     let mut current_tag_found = false;
-    for release in latest_releases.iter() {
+    for release in &latest_releases {
         if let Some(tag_index) = latest_tags
             .iter()
             .position(|tag| tag.name == release.tag_name)
@@ -182,7 +182,7 @@ pub fn do_nextui_release_check(app_state: &AppStateManager) {
             if latest_tags[tag_index].commit.sha.starts_with(&current_tag) {
                 // set release selector starting index
                 app_state.set_nextui_releases_and_tags_index(Some(releases_and_tags.len() - 1));
-                current_tag_found = true
+                current_tag_found = true;
             }
             latest_tags.remove(tag_index);
             if check_latest_release {
@@ -206,7 +206,7 @@ pub fn do_nextui_release_check(app_state: &AppStateManager) {
     app_state.set_nextui_tag(Some(releases_and_tags[0].tag.clone()));
     app_state.set_nextui_releases_and_tags(Some(releases_and_tags));
     if !current_tag_found {
-        app_state.set_nextui_releases_and_tags_index(Some(0 as usize));
+        app_state.set_nextui_releases_and_tags_index(Some(0_usize));
     }
 
     app_state.finish_operation();
