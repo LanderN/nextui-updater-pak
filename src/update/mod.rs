@@ -39,7 +39,7 @@ fn extract_zip<T: Fn(&str) -> bool>(
         let sanitized_name = next.mangled_name();
 
         if !filter(sanitized_name.as_os_str().to_string_lossy().as_ref()) {
-            println!("Skipping file: {sanitized_name:#?}");
+            println!("Skipping file: {}", sanitized_name.display());
             continue;
         }
 
@@ -131,15 +131,15 @@ pub fn do_nextui_release_check(app_state: &AppStateManager) {
 
     // Fetch latest releases information
     app_state.start_operation("Fetching latest NextUI releases...");
-    let latest_releases = fetch_releases(repo);
-    if latest_releases.is_err() {
-        // Failed connection
-        let err = latest_releases.unwrap_err();
-        println!("Releases fetch failed: {:?}", err.source());
-        app_state.set_operation_failed(&format!("Releases fetch failed: {err}"));
-        return;
-    }
-    let latest_releases = latest_releases.unwrap();
+    let latest_releases = match fetch_releases(repo) {
+        Ok(releases) => releases,
+        Err(err) => {
+            // Failed connection
+            println!("Releases fetch failed: {:?}", err.source());
+            app_state.set_operation_failed(&format!("Releases fetch failed: {err}"));
+            return;
+        }
+    };
     if latest_releases.is_empty() {
         // Connected, but no results
         println!("Releases fetch returned 0 releases");
@@ -149,15 +149,15 @@ pub fn do_nextui_release_check(app_state: &AppStateManager) {
 
     // Fetch latest tag information
     app_state.start_operation("Fetching latest NextUI tags...");
-    let latest_tags = fetch_tags(repo);
-    if latest_tags.is_err() {
-        // Failed connection
-        let err = latest_tags.unwrap_err();
-        println!("Tags fetch failed: {:?}", err.source());
-        app_state.set_operation_failed(&format!("Tags fetch failed: {err}"));
-        return;
-    }
-    let mut latest_tags = latest_tags.unwrap();
+    let mut latest_tags = match fetch_tags(repo) {
+        Ok(tags) => tags,
+        Err(err) => {
+            // Failed connection
+            println!("Tags fetch failed: {:?}", err.source());
+            app_state.set_operation_failed(&format!("Tags fetch failed: {err}"));
+            return;
+        }
+    };
     if latest_tags.is_empty() {
         // Connected, but no results
         println!("Tags fetch returned 0 tags");
