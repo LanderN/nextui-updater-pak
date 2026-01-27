@@ -1,0 +1,35 @@
+name: Build and Package
+
+on:
+  push:
+    branches: [ main, tg5050-support ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross.git
+
+      - name: Build with cross
+        run: cross build --release --target=aarch64-unknown-linux-gnu
+
+      - name: Package
+        run: bash scripts/create_pak.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextui.updater.pakz
+          path: nextui.updater.pakz
