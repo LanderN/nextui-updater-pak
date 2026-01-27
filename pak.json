@@ -5,7 +5,7 @@
   "description": "Update NextUI over-the-air!",
   "author": "LanderN",
   "repo_url": "https://github.com/LanderN/nextui-updater-pak",
-  "release_filename": "Updater.pak.zip",
+  "release_filename": "nextui.updater.pakz",
   "banners": {
     "BRICK": "doc/screenshot.png"
   },

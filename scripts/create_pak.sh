@@ -5,7 +5,7 @@ set -euo pipefail
 DIST_DIR="dist"
 PAK_DIR_NAME="Updater.pak"
 UPDATER_BINARY="target/aarch64-unknown-linux-gnu/release/nextui-updater-rs"
-ZIP_FILE="nextui-updater-pak.zip"
+ZIP_FILE="nextui.updater.pakz"
 
 rm -rf "$DIST_DIR"
 
@@ -36,6 +36,6 @@ EOF
 done
 
 (cd "$DIST_DIR" && zip -r "../$ZIP_FILE" .)
-for PLATFORM in tg5040 tg5050; do
-    (cd "$DIST_DIR/Tools/$PLATFORM/$PAK_DIR_NAME" && zip -r "../../../../$PAK_DIR_NAME_$PLATFORM.zip" .)
-done
+#for PLATFORM in tg5040 tg5050; do
+#    (cd "$DIST_DIR/Tools/$PLATFORM/$PAK_DIR_NAME" && zip -r "../../../../$PAK_DIR_NAME_$PLATFORM.zip" .)
+#done
