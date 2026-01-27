@@ -5,7 +5,7 @@ set -euo pipefail
 DIST_DIR="dist"
 PAK_DIR_NAME="Updater.pak"
 UPDATER_BINARY="target/aarch64-unknown-linux-gnu/release/nextui-updater-rs"
-ZIP_FILE="nextui.updater.pakz"
+ZIP_FILE="nextui.updater.zip"
 
 rm -rf "$DIST_DIR"
 

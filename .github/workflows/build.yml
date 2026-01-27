@@ -31,5 +31,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nextui.updater.pakz
-          path: nextui.updater.pakz
+          name: nextui.updater.zip
+          path: nextui.updater.zip
