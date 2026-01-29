@@ -67,7 +67,7 @@ pub fn self_update(app_state: &AppStateManager) -> Result<()> {
 
     println!("Fetching latest updater release...");
 
-    let release = fetch_latest_release("LanderN/nextui-updater-pak")?;
+    let release = fetch_latest_release("LoveRetro/nextui-updater-pak")?;
 
     println!("Latest updater release: {release:?}");
 

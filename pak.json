@@ -4,7 +4,7 @@
   "type": "TOOL",
   "description": "Update NextUI over-the-air!",
   "author": "LanderN",
-  "repo_url": "https://github.com/LanderN/nextui-updater-pak",
+  "repo_url": "https://github.com/LoveRetro/nextui-updater-pak",
   "release_filename": "nextui.updater.pakz",
   "banners": {
     "BRICK": "doc/screenshot.png"
