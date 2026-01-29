@@ -1,16 +1,16 @@
 {
   "name": "Updater",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "TOOL",
   "description": "Update NextUI over-the-air!",
   "author": "LanderN",
   "repo_url": "https://github.com/LanderN/nextui-updater-pak",
-  "release_filename": "Updater.pak.zip",
+  "release_filename": "nextui.updater.pakz",
   "banners": {
     "BRICK": "doc/screenshot.png"
   },
   "platforms": [
-    "tg5040"
+    "tg5040", "tg5050"
   ],
   "update_ignore": [],
   "launch": "launch.sh"
