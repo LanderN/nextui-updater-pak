@@ -2,7 +2,7 @@ name: Build and Package
 
 on:
   push:
-    branches: [ main, tg5050-support ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 

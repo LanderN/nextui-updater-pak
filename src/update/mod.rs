@@ -82,7 +82,13 @@ pub fn self_update(app_state: &AppStateManager) -> Result<()> {
         return Ok(());
     }
 
-    let bytes = download(&release.assets[0].url, |pr| {
+    let asset = release
+        .assets
+        .iter()
+        .find(|a| a.name.ends_with(".pakz"))
+        .ok_or("No .pakz asset found")?;
+
+    let bytes = download(&asset.url, |pr| {
         app_state.update_progress(pr);
     })?;
 

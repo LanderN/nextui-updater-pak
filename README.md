@@ -15,7 +15,7 @@ Unzip the `nextui-updater-pak.zip` file to the root of your SD card (merge the c
 - **Button B**: Go Back/Exit
 - **Button X**: Version Select
 
-## Building for tg5040/tg5050 using [cross-rs](https://github.com/cross-rs/cross)
+## Building for tg5040/tg5050/my355 using [cross-rs](https://github.com/cross-rs/cross)
 
 ```bash
 cross build --release --target=aarch64-unknown-linux-gnu

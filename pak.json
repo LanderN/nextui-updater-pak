@@ -10,7 +10,7 @@
     "BRICK": "doc/screenshot.png"
   },
   "platforms": [
-    "tg5040", "tg5050"
+    "tg5040", "tg5050", "my355"
   ],
   "update_ignore": [],
   "launch": "launch.sh"
