@@ -85,7 +85,7 @@ pub fn self_update(app_state: &AppStateManager) -> Result<()> {
     let asset = release
         .assets
         .iter()
-        .find(|a| a.name.ends_with(".pakz"))
+        .find(|a| a.name.to_lowercase().ends_with(".pakz"))
         .ok_or("No .pakz asset found")?;
 
     let bytes = download(&asset.url, |pr| {
